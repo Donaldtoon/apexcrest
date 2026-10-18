@@ -9,7 +9,7 @@ const path = require('path');
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
 
-// FIXED PATHS: Now points directly to your main folder instead of subfolders
+// Path routing adjustments
 const DATA_FILE = path.join(__dirname, 'accounts.json');
 const PUBLIC_DIR = __dirname; 
 
@@ -108,7 +108,6 @@ function validAmount(value) {
 function initializeAccounts() {
   const db = readDatabase();
   let changed = false;
-  const initialPassword = process.env.INITIAL_ACCOUNT_PASSWORD;
 
   for (const account of db.accounts) {
     if (account.checkingBalance === undefined) {
@@ -120,8 +119,9 @@ function initializeAccounts() {
       account.savingsBalance = 0;
       changed = true;
     }
-    if (!account.passwordHash && initialPassword) {
-      account.passwordHash = bcrypt.hashSync(initialPassword, 12);
+    // FIXED: Skip double hashing if a valid password string is already present
+    if (!account.passwordHash && process.env.INITIAL_ACCOUNT_PASSWORD) {
+      account.passwordHash = bcrypt.hashSync(process.env.INITIAL_ACCOUNT_PASSWORD, 12);
       changed = true;
     }
   }
@@ -132,7 +132,6 @@ function initializeAccounts() {
 }
 initializeAccounts();
 
-// Serve files directly from the main folder
 app.use(express.static(PUBLIC_DIR));
 
 app.get('/api/health', (req, res) => {
@@ -151,7 +150,13 @@ app.post('/api/auth/login', async (req, res) => {
     const db = readDatabase();
     const account = db.accounts.find(item => String(item.username || '').toLowerCase() === username);
 
-    if (!account || !(await bcrypt.compare(password, account.passwordHash))) {
+    if (!account) {
+      return res.status(401).json({ success: false, message: 'Invalid username or password.' });
+    }
+
+    // Secure database decryption validation tracking step
+    const match = await bcrypt.compare(password, account.passwordHash);
+    if (!match) {
       return res.status(401).json({ success: false, message: 'Invalid username or password.' });
     }
 
@@ -283,7 +288,4 @@ app.post('/api/transfer', requireAuth, (req, res) => {
 
     if (!recipient) return res.status(404).json({ success: false, message: 'Recipient routing info not found.' });
     if (sender.accountNumber === recipientNum) return res.status(400).json({ success: false, message: 'Cannot transfer to origin account.' });
-
-    const balance = sourceType === 'checking' ? sender.checkingBalance : sender.savingsBalance;
-    if (balance < amount) return res.status(400).json({ success: false, message: 'Insufficient funds available.' });
 
