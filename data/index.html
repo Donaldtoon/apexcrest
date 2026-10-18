@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Apex Crest Financial — Premium Online Banking</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+  <div class="bank-top-utility">
+    <div class="bank-container">
+      <span>Empowering Your Financial Future</span>
+      <div class="bank-top-links">
+        <a href="#accounts">Personal Banking</a>
+        <a href="#loans">Loans & Cards</a>
+        <a href="#join">Open Account</a>
+      </div>
+    </div>
+  </div>
+
+  <header class="bank-header-main">
+    <div class="bank-container bank-header-flex">
+      <a class="bank-brand-block" href="/">
+        <div class="bank-logo-badge">
+          <span class="bank-badge-primary">APEX</span><span class="bank-badge-secondary">CREST</span>
+        </div>
+        <div class="bank-brand-title">
+          <strong>Apex Crest</strong>
+          <small>FINANCIAL</small>
+        </div>
+      </a>
+      <div class="bank-secure-status">● Secure Session Active</div>
+    </div>
+  </header>
+
+  <div class="bank-container">
+    <main>
+      <!-- SIGN IN VIEW -->
+      <section id="loginView" class="bank-login-layout">
+        <div class="bank-promo-panel">
+          <h1>Your Growth Is<br><span>Our Priority.</span></h1>
+          <p>Access your portfolios securely using our advanced digital banking suite.</p>
+        </div>
+        <div class="bank-card">
+          <h2>Account Sign In</h2>
+          <form id="loginForm">
+            <label for="username">Username</label>
+            <input id="username" name="username" autocomplete="username" required placeholder="Enter username">
+            <label for="password">Password</label>
+            <input id="password" name="password" type="password" autocomplete="current-password" required placeholder="Enter password">
+            <button class="bank-btn-primary" type="submit">Sign In</button>
+            <p id="loginError" class="error-msg" role="alert"></p>
+          </form>
+        </div>
+      </section>
+
+      <!-- DASHBOARD VIEW -->
+      <section id="dashboardView" class="hidden">
+        <div class="bank-dash-heading">
+          <h1>Welcome Back, <span id="memberName">Client</span></h1>
+          <button id="logoutBtn" class="bank-btn-outline">Sign Out</button>
+        </div>
+
+        <div class="bank-dash-grid">
+          <div class="bank-account-cards">
+            <article class="bank-ledger-card">
+              <div class="bank-ledger-meta"><span>Checking Account</span><span class="mini-chip">PRIMARY</span></div>
+              <div class="bank-ledger-amt" id="checkingBalanceValue">$0.00</div>
+              <div class="bank-ledger-num"><span>Everyday Checking</span><span>Acct: •••• <b id="checkingLast4">0000</b></span></div>
+            </article>
+            <article class="bank-ledger-card">
+              <div class="bank-ledger-meta"><span>Savings Account</span><span class="mini-chip">SAVINGS</span></div>
+              <div class="bank-ledger-amt" id="savingsBalanceValue">$0.00</div>
+              <div class="bank-ledger-num"><span>High-Yield Savings</span><span>Acct: •••• <b id="savingsLast4">0000</b></span></div>
+            </article>
+          </div>
+          <div class="bank-summary-sidebar">
+            <h3>Relationship Profile</h3>
+            <span>Primary Account Number:</span>
+            <strong class="bank-summary-num" id="accountNumber">1000000001</strong>
+            <span class="bank-active-tag">● Status: Active</span>
+          </div>
+        </div>
+
+        <h2 class="bank-section-title">Account Services</h2>
+        <div class="bank-actions-grid">
+          <div class="bank-action-box">
+            <h3>Deposit</h3>
+            <form id="depositForm">
+              <label for="depositAccountType">Destination</label>
+              <select id="depositAccountType">
+                <option value="checking">Checking</option>
+                <option value="savings">Savings</option>
+              </select>
+              <label for="depositAmount">Amount</label>
+              <input id="depositAmount" type="number" min="0.01" step="0.01" required placeholder="0.00">
+              <button class="bank-btn-primary" type="submit">Deposit</button>
+            </form>
+          </div>
+          <div class="bank-action-box">
+            <h3>Withdrawal</h3>
+            <form id="withdrawForm">
+              <label for="withdrawAccountType">Source</label>
+              <select id="withdrawAccountType">
+                <option value="checking">Checking</option>
+                <option value="savings">Savings</option>
+              </select>
+              <label for="withdrawAmount">Amount</label>
+              <input id="withdrawAmount" type="number" min="0.01" step="0.01" required placeholder="0.00">
+              <button class="bank-btn-primary" type="submit">Withdraw</button>
+            </form>
+          </div>
+          <div class="bank-action-box">
+            <h3>Transfer</h3>
+            <form id="transferForm">
+              <label for="transferAccountType">Source</label>
+              <select id="transferAccountType">
+                <option value="checking">Checking</option>
+                <option value="savings">Savings</option>
+              </select>
+              <label for="recipientAccount">Recipient Acct #</label>
+              <input id="recipientAccount" required placeholder="1000000002">
+              <label for="transferAmount">Amount</label>
+              <input id="transferAmount" type="number" min="0.01" step="0.01" required placeholder="0.00">
+              <button class="bank-btn-primary" type="submit">Transfer</button>
+            </form>
+          </div>
+        </div>
+
+        <article class="bank-activity-card">
+          <div class="bank-activity-header">
+            <h2>Transaction Statement</h2>
+            <button id="refreshBtn" class="bank-btn-outline">Refresh ↻</button>
+          </div>
+          <table>
+            <thead>
+              <tr><th>Type</th><th>Description</th><th>Date & Time</th><th class="amt-col">Amount</th></tr>
+            </thead>
+            <tbody id="transactionsBody">
+              <tr><td colspan="4">Loading records...</td></tr>
+            </tbody>
+          </table>
+        </article>
+        <p id="toast" class="toast" role="status"></p>
+      </section>
+
+      <section class="bank-promo-offers-grid">
+        <div class="bank-offer-column">
+          <h2>4x points on travel. No booking portal needed.</h2>
+          <a href="#explore-card" class="bank-offer-btn">EXPLORE NOW</a>
+          <div class="bank-image-wrapper">
+            <div style="background: linear-gradient(135deg, #1e293b, #0f172a); border-radius: 12px; height: 160px; width: 100%; position: relative; border: 1px solid rgba(255,255,255,0.1); padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.3);">
+              <div style="color: #fff; font-size: 11px; font-weight: bold; opacity: 0.8; text-transform: uppercase;">APEX CREST<br><small style="font-size: 8px;">Financial</small></div>
+              <div style="color: #fff; font-size: 16px; font-weight: 300; letter-spacing: 2px; margin-top: 30px;">APEX ELITE <span style="font-size: 10px; color: #E8B00F; font-weight: bold;">Premier</span></div>
+              <div style="position: absolute; left: 20px; bottom: 20px; width: 32px; height: 24px; background: #e2e8f0; border-radius: 4px; opacity: 0.6;"></div>
+              <div style="position: absolute; right: 20px; bottom: 16px; color: #fff; font-weight: 800; font-size: 18px; font-style: italic;">VISA</div>
+            </div>
+          </div>
+        </div>
+        <div class="bank-offer-column">
+          <h2>Unlock the equity built up in your home.</h2>
+          <a href="#explore-heloc" class="bank-offer-btn">VIEW RATES</a>
+          <div class="bank-image-wrapper">
+             <div style="background: linear-gradient(135deg, #0284c7, #0369a1); border-radius: 12px; height: 160px; width: 100%; position: relative; border: 1px solid rgba(255,255,255,0.1); padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); display: flex; flex-direction: column; justify-content: center; align-items: center;">
+               <div style="color: #fff; font-size: 28px; font-weight: 800;">HELOC</div>
+               <div style="color: #e0f2fe; font-size: 12px; margin-top: 5px; text-align: center;">Flexible Rates, Smart Solutions</div>
+             </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
