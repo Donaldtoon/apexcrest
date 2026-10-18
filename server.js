@@ -9,9 +9,9 @@ const path = require('path');
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
 
-const DATA_DIR = path.join(__dirname, 'data');
-const DATA_FILE = path.join(DATA_DIR, 'accounts.json');
-const PUBLIC_DIR = path.join(__dirname, 'public');
+// FIXED PATHS: Now points directly to your main folder instead of subfolders
+const DATA_FILE = path.join(__dirname, 'accounts.json');
+const PUBLIC_DIR = __dirname; 
 
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 
@@ -29,7 +29,7 @@ app.use(session({
   secret: process.env.SESSION_SECRET || 'local-simulation-secret-change-before-deployment',
   resave: false,
   saveUninitialized: false,
-  proxy: true, // Crucial modification enabling proxy header compliance on Render
+  proxy: true, 
   cookie: {
     httpOnly: true,
     sameSite: 'lax',
@@ -46,7 +46,6 @@ app.use('/api/auth', rateLimit({
 }));
 
 function ensureDataFile() {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
   if (!fs.existsSync(DATA_FILE)) {
     fs.writeFileSync(
       DATA_FILE,
@@ -133,6 +132,7 @@ function initializeAccounts() {
 }
 initializeAccounts();
 
+// Serve files directly from the main folder
 app.use(express.static(PUBLIC_DIR));
 
 app.get('/api/health', (req, res) => {
@@ -285,3 +285,5 @@ app.post('/api/transfer', requireAuth, (req, res) => {
     if (sender.accountNumber === recipientNum) return res.status(400).json({ success: false, message: 'Cannot transfer to origin account.' });
 
     const balance = sourceType === 'checking' ? sender.checkingBalance : sender.savingsBalance;
+    if (balance < amount) return res.status(400).json({ success: false, message: 'Insufficient funds available.' });
+
