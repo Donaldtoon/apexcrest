@@ -1,16 +1,16 @@
 :root {
-  --bank-primary: #1E293B;      /* Deep Slate Charcoal */
-  --bank-secondary: #0F172A;    /* Midnight Shadow */
-  --bank-accent: #059669;       /* Emerald Accent / Status color */
-  --bank-highlight: #E2E8F0;    /* Muted Silver */
-  --bank-light-bg: #F8FAFC;     /* Clean Off-white */
-  --bank-border: #E2E8F0;       /* Light border */
-  --bank-dark-text: #0F172A;    /* Primary Text */
-  --bank-muted-text: #64748B;   /* Secondary/Muted Text */
+  --bank-primary: #1E293B;
+  --bank-secondary: #0F172A;
+  --bank-accent: #059669;
+  --bank-highlight: #E2E8F0;
+  --bank-light-bg: #F8FAFC;
+  --bank-border: #E2E8F0;
+  --bank-dark-text: #0F172A;
+  --bank-muted-text: #64748B;
   --bank-white: #FFFFFF;
   --bank-shadow: 0 12px 32px rgba(15, 23, 42, 0.06);
-  --bank-green: #10B981;        /* Transaction Success Green */
-  --bank-red: #EF4444;          /* Error Alert Red */
+  --bank-green: #10B981;
+  --bank-red: #EF4444;
 }
 
 * { box-sizing: border-box; }
@@ -29,7 +29,6 @@ body {
   padding: 0 24px;
 }
 
-/* Top Utility Navbar */
 .bank-top-utility {
   background: var(--bank-secondary);
   color: var(--bank-white);
@@ -49,7 +48,6 @@ body {
 }
 .bank-top-links a:hover { color: var(--bank-highlight); }
 
-/* Main Application Header */
 .bank-header-main {
   background: var(--bank-primary);
   border-bottom: 4px solid var(--bank-accent);
@@ -97,7 +95,6 @@ body {
 
 main { padding: 44px 0 72px; }
 
-/* Authentication Form Screen Layout */
 .bank-login-layout {
   display: grid;
   grid-template-columns: 1.1fr 0.9fr;
@@ -162,7 +159,6 @@ input:focus { border-color: var(--bank-accent); }
 .bank-btn-primary:hover { background: var(--bank-secondary); }
 .error-msg { color: var(--bank-red); font-weight: 600; margin-top: 12px; }
 
-/* Account Portal Workspace Styling */
 .bank-dash-heading {
   display: flex;
   justify-content: space-between;
@@ -227,7 +223,6 @@ input:focus { border-color: var(--bank-accent); }
 }
 .bank-action-box h3 { margin: 0 0 12px; color: var(--bank-primary); border-bottom: 1px solid var(--bank-border); padding-bottom: 6px; }
 
-/* Table Elements and History Ledger Cards */
 .bank-activity-card {
   background: var(--bank-white);
   border: 1px solid var(--bank-border);
@@ -250,28 +245,9 @@ td { padding: 12px; border-bottom: 1px solid var(--bank-border); color: var(--ba
 .toast.show { display: block; }
 .toast.error { background: var(--bank-red); }
 
-/* Portal Structure Footer blocks */
-.bank-footer {
-  background: var(--bank-primary);
-  color: #94A3B8;
-  padding: 40px 0;
-  border-top: 6px solid var(--bank-accent);
-  margin-top: 60px;
-}
-.bank-footer-grid { display: flex; gap: 60px; margin-bottom: 24px; }
-.bank-footer-col h3 { color: var(--bank-white); font-size: 12px; text-transform: uppercase; margin-bottom: 12px; }
-.bank-footer-col ul { list-style: none; padding: 0; margin: 0; }
-.bank-footer-col li { margin-bottom: 8px; }
-.bank-footer-col a { color: #94A3B8; text-decoration: none; }
-.bank-footer-col a:hover { color: var(--bank-white); }
-.bank-footer-compliance { font-size: 11px; line-height: 1.5; }
-
-.hidden { display: none !important; }
-
-/* Promotional Offers/Advertisements Panel Grid Elements */
 .bank-promo-offers-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 20px;
   margin-top: 50px;
   margin-bottom: 30px;
@@ -313,6 +289,5 @@ td { padding: 12px; border-bottom: 1px solid var(--bank-border); color: var(--ba
   background: var(--bank-white);
   color: var(--bank-primary);
 }
-.bank-image-wrapper {
-  width: 100%;
-}
+.bank-image-wrapper { width: 100%; }
+.hidden { display: none !important; }
