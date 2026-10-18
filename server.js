@@ -29,6 +29,7 @@ app.use(session({
   secret: process.env.SESSION_SECRET || 'local-simulation-secret-change-before-deployment',
   resave: false,
   saveUninitialized: false,
+  proxy: true, // Crucial modification enabling proxy header compliance on Render
   cookie: {
     httpOnly: true,
     sameSite: 'lax',
@@ -284,46 +285,3 @@ app.post('/api/transfer', requireAuth, (req, res) => {
     if (sender.accountNumber === recipientNum) return res.status(400).json({ success: false, message: 'Cannot transfer to origin account.' });
 
     const balance = sourceType === 'checking' ? sender.checkingBalance : sender.savingsBalance;
-    if (balance < amount) return res.status(400).json({ success: false, message: 'Insufficient funds available.' });
-
-    if (sourceType === 'checking') {
-      sender.checkingBalance = Number((sender.checkingBalance - amount).toFixed(2));
-      recipient.checkingBalance = Number((recipient.checkingBalance + amount).toFixed(2));
-    } else {
-      sender.savingsBalance = Number((sender.savingsBalance - amount).toFixed(2));
-      recipient.savingsBalance = Number((recipient.savingsBalance + amount).toFixed(2));
-    }
-
-    const createdAt = new Date().toISOString();
-    db.transactions.push(
-      {
-        id: 'TX' + Date.now() + Math.random().toString(36).substr(2, 5).toUpperCase(),
-        accountId: sender.id,
-        accountType: sourceType,
-        type: 'Transfer',
-        amount: -amount,
-        description: `Transfer to ${recipient.accountNumber}`,
-        createdAt
-      },
-      {
-        id: 'TX' + Date.now() + Math.random().toString(36).substr(2, 5).toUpperCase(),
-        accountId: recipient.id,
-        accountType: sourceType,
-        type: 'Transfer',
-        amount,
-        description: `Transfer from ${sender.accountNumber}`,
-        createdAt
-      }
-    );
-
-    writeDatabase(db);
-    res.json({ success: true, message: 'Transfer completed.', account: publicAccount(sender) });
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'Processing system error.' });
-  }
-});
-
-app.listen(PORT, () => {
-  console.log(`Apex Crest Financial Asset API listening on port ${PORT}`);
-});
-
