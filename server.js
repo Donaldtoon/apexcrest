@@ -8,17 +8,24 @@ const path = require('path');
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
-const DATA_FILE = path.join(__dirname, 'data', 'accounts.json');
+
+const DATA_DIR = path.join(__dirname, 'data');
+const DATA_FILE = path.join(DATA_DIR, 'accounts.json');
+const PUBLIC_DIR = path.join(__dirname, 'public');
+
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 
 app.disable('x-powered-by');
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(express.json({ limit: '20kb' }));
 app.use(express.urlencoded({ extended: false, limit: '20kb' }));
-if (IS_PRODUCTION) app.set('trust proxy', 1);
+
+if (IS_PRODUCTION) {
+  app.set('trust proxy', 1);
+}
 
 app.use(session({
-  name: 'fcb.sid',
+  name: 'acf.sid',
   secret: process.env.SESSION_SECRET || 'local-simulation-secret-change-before-deployment',
   resave: false,
   saveUninitialized: false,
@@ -37,85 +44,133 @@ app.use('/api/auth', rateLimit({
   legacyHeaders: false
 }));
 
+function ensureDataFile() {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+  if (!fs.existsSync(DATA_FILE)) {
+    fs.writeFileSync(
+      DATA_FILE,
+      JSON.stringify({ accounts: [], transactions: [] }, null, 2),
+      'utf8'
+    );
+  }
+}
+
 function readDatabase() {
-  return JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
+  ensureDataFile();
+  const db = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
+  if (!db || !Array.isArray(db.accounts) || !Array.isArray(db.transactions)) {
+    throw new Error('accounts.json must contain accounts and transactions arrays.');
+  }
+  return db;
 }
+
 function writeDatabase(db) {
-  const temp = DATA_FILE + '.tmp';
-  fs.writeFileSync(temp, JSON.stringify(db, null, 2), 'utf8');
-  fs.renameSync(temp, DATA_FILE);
+  ensureDataFile();
+  const tempFile = DATA_FILE + '.tmp';
+  fs.writeFileSync(tempFile, JSON.stringify(db, null, 2), 'utf8');
+  fs.renameSync(tempFile, DATA_FILE);
 }
+
 function publicAccount(account) {
   return {
     id: account.id,
     username: account.username,
     name: account.name,
     accountNumber: account.accountNumber,
-    accountType: account.accountType,
-    balance: Number(account.balance).toFixed(2)
+    accountType: account.accountType || 'Everyday Checking',
+    checkingBalance: Number(account.checkingBalance ?? account.balance ?? 0).toFixed(2),
+    savingsBalance: Number(account.savingsBalance ?? 0).toFixed(2),
+    savingsAccountNumber: account.savingsAccountNumber || account.accountNumber
   };
 }
+
+function getCurrentAccount(req, db) {
+  return db.accounts.find(account => account.id === req.session.accountId);
+}
+
 function requireAuth(req, res, next) {
   if (!req.session.accountId) {
     return res.status(401).json({ success: false, message: 'Please sign in to continue.' });
   }
   next();
 }
-function getCurrentAccount(req, db) {
-  return db.accounts.find(account => account.id === req.session.accountId);
-}
+
 function validAmount(value) {
-  return typeof value === 'number' && Number.isFinite(value) && value > 0 &&
-    value <= 1000000 && Math.round(value * 100) === value * 100;
+  return (
+    typeof value === 'number' &&
+    Number.isFinite(value) &&
+    value > 0 &&
+    value <= 1000000 &&
+    Math.round(value * 100) === value * 100
+  );
 }
 
-// On first run, set INITIAL_ACCOUNT_PASSWORD in your terminal to choose the local sign-in password.
 function initializeAccounts() {
   const db = readDatabase();
-  const initialPassword = process.env.INITIAL_ACCOUNT_PASSWORD;
   let changed = false;
+  const initialPassword = process.env.INITIAL_ACCOUNT_PASSWORD;
+
   for (const account of db.accounts) {
+    if (account.checkingBalance === undefined) {
+      account.checkingBalance = Number(account.balance || 0);
+      delete account.balance;
+      changed = true;
+    }
+    if (account.savingsBalance === undefined) {
+      account.savingsBalance = 0;
+      changed = true;
+    }
     if (!account.passwordHash && initialPassword) {
       account.passwordHash = bcrypt.hashSync(initialPassword, 12);
       changed = true;
     }
   }
-  if (changed) writeDatabase(db);
-  if (db.accounts.some(account => !account.passwordHash)) {
-    console.warn('First-time setup required: set INITIAL_ACCOUNT_PASSWORD in your terminal, then restart the server.');
+
+  if (changed) {
+    writeDatabase(db);
   }
 }
 initializeAccounts();
 
+app.use(express.static(PUBLIC_DIR));
+
 app.get('/api/health', (req, res) => {
-  res.json({ success: true, app: 'Federal Credit Banking', simulation: true });
+  res.json({ success: true, app: 'Apex Crest Financial Asset API', simulation: true });
 });
 
 app.post('/api/auth/login', async (req, res) => {
-  const username = String(req.body.username || '').trim().toLowerCase();
-  const password = String(req.body.password || '');
-  if (!username || !password) {
-    return res.status(400).json({ success: false, message: 'Enter your username and password.' });
+  try {
+    const username = String(req.body.username || '').trim().toLowerCase();
+    const password = String(req.body.password || '');
+
+    if (!username || !password) {
+      return res.status(400).json({ success: false, message: 'Enter your username and password.' });
+    }
+
+    const db = readDatabase();
+    const account = db.accounts.find(item => String(item.username || '').toLowerCase() === username);
+
+    if (!account || !(await bcrypt.compare(password, account.passwordHash))) {
+      return res.status(401).json({ success: false, message: 'Invalid username or password.' });
+    }
+
+    req.session.regenerate(err => {
+      if (err) return res.status(500).json({ success: false, message: 'Could not start your session.' });
+      req.session.accountId = account.id;
+      req.session.save(saveError => {
+        if (saveError) return res.status(500).json({ success: false, message: 'Could not save your session.' });
+        return res.json({ success: true, account: publicAccount(account) });
+      });
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Unable to sign in right now.' });
   }
-  const db = readDatabase();
-  const account = db.accounts.find(item => item.username.toLowerCase() === username);
-  if (account && !account.passwordHash) {
-    return res.status(503).json({ success: false, message: 'Initial setup is incomplete. Set INITIAL_ACCOUNT_PASSWORD in the server terminal and restart.' });
-  }
-  if (!account || !(await bcrypt.compare(password, account.passwordHash))) {
-    return res.status(401).json({ success: false, message: 'Invalid username or password.' });
-  }
-  req.session.regenerate(err => {
-    if (err) return res.status(500).json({ success: false, message: 'Could not start your session.' });
-    req.session.accountId = account.id;
-    res.json({ success: true, account: publicAccount(account) });
-  });
 });
 
 app.post('/api/auth/logout', (req, res) => {
   req.session.destroy(err => {
     if (err) return res.status(500).json({ success: false, message: 'Could not sign out.' });
-    res.clearCookie('fcb.sid');
+    res.clearCookie('acf.sid');
     res.json({ success: true });
   });
 });
@@ -123,85 +178,152 @@ app.post('/api/auth/logout', (req, res) => {
 app.get('/api/me', requireAuth, (req, res) => {
   const db = readDatabase();
   const account = getCurrentAccount(req, db);
-  if (!account) return res.status(401).json({ success: false, message: 'Session account not found.' });
+  if (!account) return res.status(401).json({ success: false, message: 'Session expired.' });
   res.json({ success: true, account: publicAccount(account) });
 });
 
 app.get('/api/transactions', requireAuth, (req, res) => {
-  const db = readDatabase();
-  const account = getCurrentAccount(req, db);
-  if (!account) return res.status(401).json({ success: false, message: 'Please sign in again.' });
-  const transactions = db.transactions.filter(tx => tx.accountId === account.id).slice().reverse().slice(0, 50);
-  res.json({ success: true, transactions });
+  try {
+    const db = readDatabase();
+    const account = getCurrentAccount(req, db);
+
+    if (!account) return res.status(401).json({ success: false, message: 'Client session missing.' });
+
+    const userTransactions = db.transactions.filter(tx => tx.accountId === account.id);
+    userTransactions.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    res.json({ success: true, transactions: userTransactions });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Unable to retrieve records.' });
+  }
 });
 
-app.post('/api/transactions/deposit', requireAuth, (req, res) => {
-  const amount = Number(req.body.amount);
-  if (!validAmount(amount)) {
-    return res.status(400).json({ success: false, message: 'Enter an amount between $0.01 and $1,000,000.00, with up to two decimal places.' });
+app.post('/api/deposit', requireAuth, (req, res) => {
+  try {
+    const amount = Number(req.body.amount);
+    const targetType = String(req.body.accountType).toLowerCase();
+
+    if (!validAmount(amount)) return res.status(400).json({ success: false, message: 'Invalid deposit amount.' });
+    if (targetType !== 'checking' && targetType !== 'savings') return res.status(400).json({ success: false, message: 'Invalid target selection.' });
+
+    const db = readDatabase();
+    const account = db.accounts.find(acc => acc.id === req.session.accountId);
+
+    if (targetType === 'checking') {
+      account.checkingBalance = Number((account.checkingBalance + amount).toFixed(2));
+    } else {
+      account.savingsBalance = Number((account.savingsBalance + amount).toFixed(2));
+    }
+
+    db.transactions.push({
+      id: 'TX' + Date.now() + Math.random().toString(36).substr(2, 5).toUpperCase(),
+      accountId: account.id,
+      accountType: targetType,
+      type: 'Deposit',
+      amount: amount,
+      description: `Deposit — ${targetType.charAt(0).toUpperCase() + targetType.slice(1)}`,
+      createdAt: new Date().toISOString()
+    });
+
+    writeDatabase(db);
+    res.json({ success: true, message: 'Deposit completed successfully.', account: publicAccount(account) });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Processing system error.' });
   }
-  const db = readDatabase();
-  const account = getCurrentAccount(req, db);
-  if (!account) return res.status(401).json({ success: false, message: 'Please sign in again.' });
-  account.balance = Math.round((account.balance + amount) * 100) / 100;
-  db.transactions.push({
-    id: 'TX' + Date.now() + Math.random().toString(36).slice(2, 7).toUpperCase(),
-    accountId: account.id, type: 'Deposit', amount: amount.toFixed(2),
-    description: 'Practice deposit — fictional funds', createdAt: new Date().toISOString()
-  });
-  writeDatabase(db);
-  res.json({ success: true, account: publicAccount(account), message: 'Deposit recorded in the simulation.' });
 });
 
-app.post('/api/transactions/withdraw', requireAuth, (req, res) => {
-  const amount = Number(req.body.amount);
-  if (!validAmount(amount)) {
-    return res.status(400).json({ success: false, message: 'Enter an amount between $0.01 and $1,000,000.00, with up to two decimal places.' });
+app.post('/api/withdraw', requireAuth, (req, res) => {
+  try {
+    const amount = Number(req.body.amount);
+    const sourceType = String(req.body.accountType).toLowerCase();
+
+    if (!validAmount(amount)) return res.status(400).json({ success: false, message: 'Invalid withdrawal amount.' });
+    
+    const db = readDatabase();
+    const account = db.accounts.find(acc => acc.id === req.session.accountId);
+
+    const balance = sourceType === 'checking' ? account.checkingBalance : account.savingsBalance;
+    if (balance < amount) return res.status(400).json({ success: false, message: 'Insufficient funds available.' });
+
+    if (sourceType === 'checking') {
+      account.checkingBalance = Number((account.checkingBalance - amount).toFixed(2));
+    } else {
+      account.savingsBalance = Number((account.savingsBalance - amount).toFixed(2));
+    }
+
+    db.transactions.push({
+      id: 'TX' + Date.now() + Math.random().toString(36).substr(2, 5).toUpperCase(),
+      accountId: account.id,
+      accountType: sourceType,
+      type: 'Withdrawal',
+      amount: -amount,
+      description: `Withdrawal — ${sourceType.charAt(0).toUpperCase() + sourceType.slice(1)}`,
+      createdAt: new Date().toISOString()
+    });
+
+    writeDatabase(db);
+    res.json({ success: true, message: 'Withdrawal completed.', account: publicAccount(account) });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Processing system error.' });
   }
-  const db = readDatabase();
-  const account = getCurrentAccount(req, db);
-  if (!account) return res.status(401).json({ success: false, message: 'Please sign in again.' });
-  if (amount > account.balance) return res.status(400).json({ success: false, message: 'Insufficient available balance.' });
-  account.balance = Math.round((account.balance - amount) * 100) / 100;
-  db.transactions.push({
-    id: 'TX' + Date.now() + Math.random().toString(36).slice(2, 7).toUpperCase(),
-    accountId: account.id, type: 'Withdrawal', amount: (-amount).toFixed(2),
-    description: 'Practice withdrawal — fictional funds', createdAt: new Date().toISOString()
-  });
-  writeDatabase(db);
-  res.json({ success: true, account: publicAccount(account), message: 'Withdrawal recorded in the simulation.' });
 });
 
-app.post('/api/transactions/transfer', requireAuth, (req, res) => {
-  const amount = Number(req.body.amount);
-  const recipientNumber = String(req.body.accountNumber || '').replace(/\s/g, '');
-  if (!validAmount(amount) || !/^\d{10}$/.test(recipientNumber)) {
-    return res.status(400).json({ success: false, message: 'Enter a valid amount and 10-digit recipient account number.' });
-  }
-  const db = readDatabase();
-  const sender = getCurrentAccount(req, db);
-  const recipient = db.accounts.find(account => account.accountNumber === recipientNumber);
-  if (!sender) return res.status(401).json({ success: false, message: 'Please sign in again.' });
-  if (!recipient || recipient.id === sender.id) {
-    return res.status(400).json({ success: false, message: 'Choose another valid account.' });
-  }
-  if (amount > sender.balance) return res.status(400).json({ success: false, message: 'Insufficient available balance.' });
-  sender.balance = Math.round((sender.balance - amount) * 100) / 100;
-  recipient.balance = Math.round((recipient.balance + amount) * 100) / 100;
-  const createdAt = new Date().toISOString();
-  const reference = 'TX' + Date.now() + Math.random().toString(36).slice(2, 7).toUpperCase();
-  db.transactions.push(
-    { id: reference, accountId: sender.id, type: 'Transfer sent', amount: (-amount).toFixed(2), description: 'Practice transfer to ' + recipient.name, createdAt },
-    { id: reference + 'R', accountId: recipient.id, type: 'Transfer received', amount: amount.toFixed(2), description: 'Practice transfer from ' + sender.name, createdAt }
-  );
-  writeDatabase(db);
-  res.json({ success: true, account: publicAccount(sender), message: 'Transfer recorded in the simulation.' });
-});
+app.post('/api/transfer', requireAuth, (req, res) => {
+  try {
+    const amount = Number(req.body.amount);
+    const sourceType = String(req.body.accountType).toLowerCase();
+    const recipientNum = String(req.body.recipientAccount || '').trim();
 
-app.use(express.static(path.join(__dirname, 'public')));
-app.get('/{*splat}', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+    if (!validAmount(amount)) return res.status(400).json({ success: false, message: 'Invalid transfer amount.' });
+
+    const db = readDatabase();
+    const sender = db.accounts.find(acc => acc.id === req.session.accountId);
+    const recipient = db.accounts.find(acc => acc.accountNumber === recipientNum);
+
+    if (!recipient) return res.status(404).json({ success: false, message: 'Recipient routing info not found.' });
+    if (sender.accountNumber === recipientNum) return res.status(400).json({ success: false, message: 'Cannot transfer to origin account.' });
+
+    const balance = sourceType === 'checking' ? sender.checkingBalance : sender.savingsBalance;
+    if (balance < amount) return res.status(400).json({ success: false, message: 'Insufficient funds available.' });
+
+    if (sourceType === 'checking') {
+      sender.checkingBalance = Number((sender.checkingBalance - amount).toFixed(2));
+      recipient.checkingBalance = Number((recipient.checkingBalance + amount).toFixed(2));
+    } else {
+      sender.savingsBalance = Number((sender.savingsBalance - amount).toFixed(2));
+      recipient.savingsBalance = Number((recipient.savingsBalance + amount).toFixed(2));
+    }
+
+    const createdAt = new Date().toISOString();
+    db.transactions.push(
+      {
+        id: 'TX' + Date.now() + Math.random().toString(36).substr(2, 5).toUpperCase(),
+        accountId: sender.id,
+        accountType: sourceType,
+        type: 'Transfer',
+        amount: -amount,
+        description: `Transfer to ${recipient.accountNumber}`,
+        createdAt
+      },
+      {
+        id: 'TX' + Date.now() + Math.random().toString(36).substr(2, 5).toUpperCase(),
+        accountId: recipient.id,
+        accountType: sourceType,
+        type: 'Transfer',
+        amount,
+        description: `Transfer from ${sender.accountNumber}`,
+        createdAt
+      }
+    );
+
+    writeDatabase(db);
+    res.json({ success: true, message: 'Transfer completed.', account: publicAccount(sender) });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Processing system error.' });
+  }
+});
 
 app.listen(PORT, () => {
-  console.log(`Federal Credit Banking running at http://localhost:${PORT}`);
-  console.log();
+  console.log(`Apex Crest Financial Asset API listening on port ${PORT}`);
 });
+
