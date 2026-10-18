@@ -1,0 +1,37 @@
+{
+  "accounts": [
+    {
+      "id": "account-1001",
+      "username": "donald.wilson",
+      "name": "Donald Wilson",
+      "accountNumber": "1982534651",
+      "accountType": "Everyday Checking",
+      "passwordHash": "$2a$12$AmXrk1dD/dqF2g6GrfYFB.n5mpahcdMwtzfcroJDasaLQWXgFaVSC",
+      "checkingBalance": 866054.00,
+      "savingsBalance": 49572.00,
+      "savingsAccountNumber": "1982534652"
+    },
+    {
+      "id": "account-1002",
+      "username": "montalvo.marcus",
+      "name": "Montalvo Marcus",
+      "accountNumber": "9823656743",
+      "accountType": "Everyday Checking",
+      "passwordHash": "$2a$12$/PeJApZ5YOvelTvEtdANf.IQkabeb1o7d9x6TcPOlw7a0fh75CR8u",
+      "checkingBalance": 775257.00,
+      "savingsBalance": 20937.00,
+      "savingsAccountNumber": "9823656744"
+    }
+  ],
+  "transactions": [
+    {
+      "id": "TX-SIM-001",
+      "accountId": "account-1001",
+      "accountType": "checking",
+      "type": "Deposit",
+      "amount": 2500.00,
+      "description": "Digital Check Deposit — Checking",
+      "createdAt": "2026-10-08T10:00:00.000Z"
+    }
+  ]
+}
