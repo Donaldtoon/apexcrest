@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0a2854">
+  <title>Federal Credit Bank</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <div class="simulation-ribbon"></div>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Federal Credit Banking home"><span class="brand-mark">FC</span><span><strong>Federal Credit Union Banking</strong><small>CREDIT UNION</small></span></a>
+    <span class="secure-note">● Environment</span>
+  </header>
+  <main>
+    <section id="loginView" class="login-layout">
+      <div class="welcome-panel">
+        <div class="eyebrow"></div>
+        <h1>Your money.<br><span>Your goals.</span></h1>
+        <p>Explore a modern online banking experience in a safe, fictional learning environment.</p>
+        <div class="feature-pills"><span>Account overview</span><span>Practice transfers</span><span>Activity history</span></div>
+        <div class="abstract-art" aria-hidden="true"><div class="art-circle"></div><div class="art-card"></div><div class="art-line"></div></div>
+      </div>
+      <div class="login-card">
+        <div class="card-kicker">WELCOME BACK</div><h2>Sign in</h2><p class="muted">Enter your account username and password.</p>
+        <form id="loginForm"><label for="username">Username</label><input id="username" name="username" autocomplete="username" required placeholder="Enter username"><label for="password">Password</label><input id="password" name="password" type="password" autocomplete="current-password" required placeholder="Enter password"><button class="primary-btn full" type="submit">Sign in <span aria-hidden="true">→</span></button><p id="loginError" class="error-message" role="alert"></p></form>
+        <p class="legal-note">Thank You For Banking With Us.</p>
+      </div>
+    </section>
+    <section id="dashboardView" class="dashboard hidden">
+      <div class="dashboard-heading"><div><div class="eyebrow">Dashboard</div><h1>Good to see you, <span id="memberName">Member</span></h1><p class="muted">Here is your account overview.</p></div><button id="logoutBtn" class="outline-btn">Sign out</button></div>
+      <div class="simulation-alert"><strong></strong> People Helping People</div>
+      <div class="summary-grid"><article class="balance-card"><div class="balance-card-top"><span>Total available balance</span><span class="mini-chip">USD</span></div><div class="big-balance" id="balanceValue">$0.00</div><div class="account-line"><span id="accountType">Everyday Checking</span><span>•••• <b id="accountLast4">0000</b></span></div><div class="balance-decoration" aria-hidden="true"></div></article><article class="account-card"><div class="icon-box">▤</div><span class="muted">Account number</span><strong id="accountNumber">9987456320</strong><span class="status"><i></i> Account active</span></article></div>
+      <div class="section-heading"><div><h2>Quick actions</h2><p class="muted">Try a transaction using fictional funds.</p></div></div>
+      <div class="actions-grid">
+        <article class="action-card"><div class="action-icon deposit-icon">＋</div><h3>Deposit</h3><p></p><form id="depositForm"><label for="depositAmount">Amount (USD)</label><input id="depositAmount" type="number" min="0.01" max="1000000" step="0.01" placeholder="100.00" required><button class="primary-btn full" type="submit">Make deposit</button></form></article>
+        <article class="action-card"><div class="action-icon withdraw-icon">−</div><h3>Withdraw</h3><p></p><form id="withdrawForm"><label for="withdrawAmount">Amount (USD)</label><input id="withdrawAmount" type="number" min="0.01" max="1000000" step="0.01" placeholder="50.00" required><button class="primary-btn full" type="submit">Make withdrawal</button></form></article>
+        <article class="action-card"><div class="action-icon transfer-icon">↗</div><h3>Transfer</h3><p></p><form id="transferForm"><label for="recipientAccount">Recipient account number</label><input id="recipientAccount" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" placeholder="1000000002" required><label for="transferAmount">Amount (USD)</label><input id="transferAmount" type="number" min="0.01" max="1000000" step="0.01" placeholder="25.00" required><button class="primary-btn full" type="submit">Make transfer</button></form><small class="form-hint"></small></article>
+      </div>
+      <section class="transactions-card"><div class="section-heading"><div><h2>Recent activity</h2><p class="muted">Your latest account transactions.</p></div><button id="refreshBtn" class="outline-btn">Refresh activity ↻</button></div><div class="table-wrap"><table><thead><tr><th>Transaction</th><th>Description</th><th>Date</th><th class="amount-col">Amount</th></tr></thead><tbody id="transactionsBody"><tr><td colspan="4" class="empty-state">Loading activity…</td></tr></tbody></table></div></section>
+      <p id="toast" class="toast" role="status" aria-live="polite"></p>
+    </section>
+  </main>
+  <footer><span>Federal Credit Banking</span><span></span></footer>
+</body>
+</html>

@@ -1,0 +1,80 @@
+{
+  "accounts": [
+    {
+      "id": "account-1001",
+      "username": "donald.wilson",
+      "name": "Donald Wilson",
+      "accountNumber": "1000000001",
+      "accountType": "Everyday Checking",
+      "balance": 963522,
+      "passwordHash": "$2a$12$AmXrk1dD/dqF2g6GrfYFB.n5mpahcdMwtzfcroJDasaLQWXgFaVSC"
+    },
+    {
+      "id": "account-1002",
+      "username": "montalvo.marcus",
+      "name": "Montalvo Marcus",
+      "accountNumber": "1000000002",
+      "accountType": "Savings",
+      "balance": 906489,
+      "passwordHash": "$2a$12$/PeJApZ5YOvelTvEtdANf.IQkabeb1o7d9x6TcPOlw7a0fh75CR8u"
+    }
+  ],
+  "transactions": [
+    {
+      "id": "TX-SIM-001",
+      "accountId": "account-1001",
+      "type": "Deposit",
+      "amount": "2500.00",
+      "description": "Deposit",
+      "createdAt": "2026-10-08T10:00:00.000Z"
+    },
+    {
+      "id": "TX-SIM-002",
+      "accountId": "account-1001",
+      "type": "Withdrawal",
+      "amount": "-500.00",
+      "description": "Withdrawal",
+      "createdAt": "2026-10-08T12:30:00.000Z"
+    },
+    {
+      "id": "TX1791572425252GAWY9",
+      "accountId": "account-1002",
+      "type": "Deposit",
+      "amount": "100000.00",
+      "description": "Practice deposit — fictional funds",
+      "createdAt": "2026-10-09T19:00:25.252Z"
+    },
+    {
+      "id": "TX1791572433489EHA0Y",
+      "accountId": "account-1002",
+      "type": "Deposit",
+      "amount": "1000000.00",
+      "description": "Practice deposit — fictional funds",
+      "createdAt": "2026-10-09T19:00:33.489Z"
+    },
+    {
+      "id": "TX1791572441642RRXK6",
+      "accountId": "account-1002",
+      "type": "Withdrawal",
+      "amount": "-2000.00",
+      "description": "Practice withdrawal — fictional funds",
+      "createdAt": "2026-10-09T19:00:41.642Z"
+    },
+    {
+      "id": "TX1791572447048JQP8A",
+      "accountId": "account-1002",
+      "type": "Withdrawal",
+      "amount": "-200000.00",
+      "description": "Practice withdrawal — fictional funds",
+      "createdAt": "2026-10-09T19:00:47.048Z"
+    },
+    {
+      "id": "TX17915725569547NVXY",
+      "accountId": "account-1002",
+      "type": "Deposit",
+      "amount": "200000.00",
+      "description": "Practice deposit — fictional funds",
+      "createdAt": "2026-10-09T19:02:36.954Z"
+    }
+  ]
+}
